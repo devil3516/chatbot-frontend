@@ -7,6 +7,48 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { v4 as uuidv4 } from 'uuid';
 
+// Sample dummy chats for demonstration
+const sampleChats: Chat[] = [
+  {
+    id: '1',
+    title: 'Introduction to AI',
+    createdAt: Date.now() - 86400000 * 2, // 2 days ago
+    messages: [
+      {
+        id: '101',
+        content: 'What is artificial intelligence?',
+        role: 'user',
+        timestamp: Date.now() - 86400000 * 2,
+      },
+      {
+        id: '102',
+        content: 'Artificial Intelligence (AI) refers to computer systems designed to perform tasks that typically require human intelligence, such as visual perception, speech recognition, decision-making, and language translation. These systems learn from data, identify patterns, and make decisions with minimal human intervention.',
+        role: 'assistant',
+        timestamp: Date.now() - 86400000 * 2 + 30000,
+      }
+    ],
+  },
+  {
+    id: '2',
+    title: 'Machine Learning Basics',
+    createdAt: Date.now() - 86400000, // 1 day ago
+    messages: [
+      {
+        id: '201',
+        content: 'Can you explain machine learning in simple terms?',
+        role: 'user',
+        timestamp: Date.now() - 86400000,
+      },
+      {
+        id: '202',
+        content: 'Machine learning is a subset of AI where computers learn patterns from data without being explicitly programmed. Think of it like teaching a child: instead of giving specific instructions for every situation, you show examples and they learn to recognize patterns. Similarly, machine learning algorithms improve their performance as they are exposed to more data over time.',
+        role: 'assistant',
+        timestamp: Date.now() - 86400000 + 45000,
+      }
+    ],
+  }
+];
+
 const Index = () => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
@@ -21,11 +63,15 @@ const Index = () => {
     if (savedChats) {
       try {
         const parsedChats = JSON.parse(savedChats);
-        setChats(parsedChats);
         
-        // Set currentChatId to the most recent chat or create a new one
-        if (parsedChats.length > 0) {
-          setCurrentChatId(parsedChats[0].id);
+        // If there are no saved chats, use the sample chats
+        const chatsToUse = parsedChats.length > 0 ? parsedChats : sampleChats;
+        
+        setChats(chatsToUse);
+        
+        // Set currentChatId to the most recent chat
+        if (chatsToUse.length > 0) {
+          setCurrentChatId(chatsToUse[0].id);
         } else {
           createNewChat();
         }
@@ -36,11 +82,14 @@ const Index = () => {
           description: "Could not load saved chats",
           variant: "destructive"
         });
-        createNewChat();
+        // Use sample chats if there's an error
+        setChats(sampleChats);
+        setCurrentChatId(sampleChats[0].id);
       }
     } else {
-      // No saved chats, create a new one
-      createNewChat();
+      // No saved chats, use the sample chats
+      setChats(sampleChats);
+      setCurrentChatId(sampleChats[0].id);
     }
 
     // Auto-collapse sidebar on mobile
