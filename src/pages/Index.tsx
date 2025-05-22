@@ -15,12 +15,20 @@ const Index = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Initialize from localStorage
+  // Initialize from localStorage and create a new chat if none exists
   useEffect(() => {
     const savedChats = localStorage.getItem('chats');
     if (savedChats) {
       try {
-        setChats(JSON.parse(savedChats));
+        const parsedChats = JSON.parse(savedChats);
+        setChats(parsedChats);
+        
+        // Set currentChatId to the most recent chat or create a new one
+        if (parsedChats.length > 0) {
+          setCurrentChatId(parsedChats[0].id);
+        } else {
+          createNewChat();
+        }
       } catch (error) {
         console.error('Error parsing saved chats:', error);
         toast({
@@ -28,7 +36,11 @@ const Index = () => {
           description: "Could not load saved chats",
           variant: "destructive"
         });
+        createNewChat();
       }
+    } else {
+      // No saved chats, create a new one
+      createNewChat();
     }
 
     // Auto-collapse sidebar on mobile
@@ -55,7 +67,7 @@ const Index = () => {
       createdAt: Date.now(),
     };
 
-    setChats([newChat, ...chats]);
+    setChats(prevChats => [newChat, ...prevChats]);
     setCurrentChatId(newChatId);
     
     // Auto-collapse sidebar on mobile after selecting a chat
