@@ -3,8 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Chat, Message } from '@/types/chat';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatWindow from '@/components/ChatWindow';
+import AuthPage from '@/components/AuthPage';
+import UserMenu from '@/components/UserMenu';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/contexts/AuthContext';
 import { v4 as uuidv4 } from 'uuid';
 
 // Sample dummy chats for demonstration
@@ -56,9 +59,15 @@ const Index = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   // Initialize from localStorage and create a new chat if none exists
   useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Create a new chat immediately when user authenticates
+    createNewChat();
+
     const savedChats = localStorage.getItem('chats');
     if (savedChats) {
       try {
@@ -72,8 +81,6 @@ const Index = () => {
         // Set currentChatId to the most recent chat
         if (chatsToUse.length > 0) {
           setCurrentChatId(chatsToUse[0].id);
-        } else {
-          createNewChat();
         }
       } catch (error) {
         console.error('Error parsing saved chats:', error);
@@ -96,12 +103,14 @@ const Index = () => {
     if (isMobile) {
       setIsSidebarCollapsed(true);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   // Save chats to localStorage
   useEffect(() => {
-    localStorage.setItem('chats', JSON.stringify(chats));
-  }, [chats]);
+    if (isAuthenticated && chats.length > 0) {
+      localStorage.setItem('chats', JSON.stringify(chats));
+    }
+  }, [chats, isAuthenticated]);
 
   const getCurrentChat = () => {
     return chats.find(chat => chat.id === currentChatId) || null;
@@ -220,6 +229,23 @@ const Index = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-chatbg">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-lg">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show auth page if not authenticated
+  if (!isAuthenticated) {
+    return <AuthPage />;
+  }
+
   return (
     <div className="h-screen flex overflow-hidden bg-chatbg">
       <ChatSidebar
@@ -229,6 +255,7 @@ const Index = () => {
         onCreateNewChat={createNewChat}
         isCollapsed={isSidebarCollapsed}
         toggleSidebar={toggleSidebar}
+        headerContent={<UserMenu />}
       />
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         <ChatWindow

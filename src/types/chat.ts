@@ -1,4 +1,3 @@
-
 export interface Message {
   id: string;
   content: string;
@@ -11,4 +10,14 @@ export interface Chat {
   title: string;
   messages: Message[];
   createdAt: number;
+}
+
+export interface ChatSidebarProps {
+  chats: Chat[];
+  currentChatId: string | null;
+  onSelectChat: (id: string) => void;
+  onCreateNewChat: () => void;
+  isCollapsed: boolean;
+  toggleSidebar: () => void;
+  headerContent?: React.ReactNode;
 }
