@@ -1,4 +1,4 @@
-// Updated index.tsx to always create and switch to new chat after deleting current chat
+// Updated index.tsx to always land on a new chat after login
 
 import React, { useState, useEffect } from 'react';
 import { Chat, Message } from '@/types/chat';
@@ -30,9 +30,9 @@ const Index = () => {
             Authorization: `Token ${token}`,
           },
         });
-        
+
         if (!res.ok) throw new Error('Failed to fetch chats');
-        
+
         const data = await res.json();
         const transformedChats = data.map((session: any) => ({
           id: session.id,
@@ -46,12 +46,12 @@ const Index = () => {
           })),
           isLocal: false
         }));
-        
+
         setChats(transformedChats);
-        
-        if (transformedChats.length > 0) {
-          setCurrentChatId(transformedChats[0].id);
-        }
+
+        // Always create a new chat after login
+        createNewChat();
+
         if (isMobile) setIsSidebarCollapsed(true);
       } catch (error) {
         console.error('Error fetching chats:', error);
@@ -104,6 +104,17 @@ const Index = () => {
       let sessionId = currentChatId;
       let response;
 
+      // Show user message immediately
+      setChats(prev =>
+        prev.map(chat =>
+          chat.id === currentChatId
+            ? { ...chat, messages: [...chat.messages, userMessage] }
+            : chat
+        )
+      );
+
+      await new Promise(resolve => setTimeout(resolve, 800));
+
       if (isLocalChat) {
         const chatTitle = content.slice(0, 50) + (content.length > 50 ? '...' : '');
         const createRes = await fetch('http://127.0.0.1:8000/api/create-chat-session/', {
@@ -118,25 +129,16 @@ const Index = () => {
         if (!createRes.ok) throw new Error('Failed to create session');
         const newSession = await createRes.json();
         sessionId = newSession.id;
-
-        response = await fetch('http://127.0.0.1:8000/api/groq-chat/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Token ${token}`,
-          },
-          body: JSON.stringify({ message: content, session_id: sessionId }),
-        });
-      } else {
-        response = await fetch('http://127.0.0.1:8000/api/groq-chat/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Token ${token}`,
-          },
-          body: JSON.stringify({ message: content, session_id: sessionId }),
-        });
       }
+
+      response = await fetch('http://127.0.0.1:8000/api/groq-chat/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Token ${token}`,
+        },
+        body: JSON.stringify({ message: content, session_id: sessionId }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -153,7 +155,7 @@ const Index = () => {
 
       setChats(prev => {
         if (isLocalChat) {
-          return prev.map(chat => 
+          return prev.map(chat =>
             chat.id === currentChatId
               ? {
                   id: sessionId,
@@ -169,7 +171,7 @@ const Index = () => {
             chat.id === sessionId
               ? {
                   ...chat,
-                  messages: [...chat.messages, userMessage, aiMessage],
+                  messages: [...chat.messages, aiMessage],
                 }
               : chat
           );
@@ -196,7 +198,10 @@ const Index = () => {
     if (chatId.startsWith('temp-')) {
       const updatedChats = chats.filter(chat => chat.id !== chatId);
       setChats(updatedChats);
-      createNewChat();
+
+      if (currentChatId === chatId) {
+        createNewChat();
+      }
       return;
     }
 
@@ -212,7 +217,20 @@ const Index = () => {
       if (response.status === 204) {
         const updatedChats = chats.filter(chat => chat.id !== chatId);
         setChats(updatedChats);
-        createNewChat();
+
+        if (currentChatId === chatId) {
+          createNewChat();
+        }
+
+        try {
+          const data = await response.json();
+          toast({
+            title: 'Success',
+            description: data.detail || 'Chat deleted successfully',
+          });
+        } catch (jsonError) {
+          toast({ title: 'Success', description: 'Chat deleted successfully' });
+        }
       } else if (response.status === 404) {
         const errorData = await response.json();
         toast({
