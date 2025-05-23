@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -27,29 +26,13 @@ export const useAuth = () => {
   return context;
 };
 
-// Mock users for demo purposes
-const mockUsers = [
-  {
-    id: '1',
-    username: 'demo',
-    email: 'demo@example.com',
-    password: 'password',
-  },
-  {
-    id: '2',
-    username: 'test',
-    email: 'test@example.com',
-    password: 'password',
-  },
-];
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is stored in localStorage (simulating persistent session)
+    // Check if user is stored in localStorage
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
@@ -64,40 +47,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (identifier: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Find user with matching credentials (either email or username)
-      const foundUser = mockUsers.find(
-        u => (u.email === identifier || u.username === identifier) && u.password === password
-      );
-      
-      if (!foundUser) {
-        throw new Error('Invalid credentials');
-      }
-      
-      // Create the user object (without the password)
-      const authenticatedUser = {
-        id: foundUser.id,
-        username: foundUser.username,
-        email: foundUser.email,
-      };
-      
-      // Set user in state and localStorage
+      const res = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: identifier, password }),
+      });
+  
+      if (!res.ok) throw new Error('Invalid credentials');
+  
+      const data = await res.json();
+  
+      const authenticatedUser = data.user;
       setUser(authenticatedUser);
+      localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(authenticatedUser));
-      
-      toast({
-        title: "Success",
-        description: "You have successfully logged in",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to login",
-        variant: "destructive",
-      });
-      throw error;
+  
+      toast({ title: 'Success', description: 'Logged in successfully' });
+    } catch (err) {
+      toast({ title: 'Error', description: 'Login failed', variant: 'destructive' });
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -106,48 +74,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (email: string, username: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Check if user already exists
-      if (mockUsers.some(u => u.email === email)) {
-        throw new Error('Email already in use');
-      }
-
-      // In a real app, we would save the new user to a database
-      // For this demo, we'll just create a new user object
-      const newUser = {
-        id: `${mockUsers.length + 1}`,
-        username,
-        email,
-      };
-      
-      mockUsers.push({ ...newUser, password });
-      
-      // Set user in state and localStorage
+      const res = await fetch('http://127.0.0.1:8000/api/auth/register/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, username, password }),
+      });
+  
+      if (!res.ok) throw new Error('Registration failed');
+  
+      const data = await res.json();
+      const newUser = data.user;
       setUser(newUser);
+      localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(newUser));
-      
-      toast({
-        title: "Success",
-        description: "Account created successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create account",
-        variant: "destructive",
-      });
-      throw error;
+  
+      toast({ title: 'Success', description: 'Account created successfully' });
+    } catch (err) {
+      toast({ title: 'Error', description: 'Signup failed', variant: 'destructive' });
+      throw err;
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
-    localStorage.removeItem('chats'); // Clear chats on logout
+    localStorage.removeItem('token');
+    localStorage.removeItem('chats');
     toast({
       title: "Logged out",
       description: "You have been logged out successfully",

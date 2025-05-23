@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,10 +13,10 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isWaitingForRespon
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (input.trim() && !isWaitingForResponse) {
-      onSendMessage(input.trim());
-      setInput('');
-    }
+    const message = input.trim();
+    if (!message || isWaitingForResponse) return;
+    onSendMessage(message);
+    setInput('');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
