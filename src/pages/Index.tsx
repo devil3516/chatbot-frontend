@@ -171,6 +171,13 @@ const Index = () => {
   
   const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
 
+  const handleDeleteChat = (chatId: string) => {
+    setChats(prev => prev.filter(chat => chat.id !== chatId));
+    if (currentChatId === chatId) {
+      setCurrentChatId(chats.length > 1 ? chats[0].id : null);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-chatbg">
@@ -191,6 +198,7 @@ const Index = () => {
         currentChatId={currentChatId}
         onSelectChat={handleSelectChat}
         onCreateNewChat={createNewChat}
+        onDeleteChat={handleDeleteChat}
         isCollapsed={isSidebarCollapsed}
         toggleSidebar={toggleSidebar}
         headerContent={<UserMenu />}

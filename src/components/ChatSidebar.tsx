@@ -1,21 +1,47 @@
-
 import React from 'react';
 import { Chat, ChatSidebarProps } from '@/types/chat';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Plus, Menu } from 'lucide-react';
+import { MessageSquare, Plus, Menu, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useToast } from '@/hooks/use-toast';
 
-const ChatSidebar: React.FC<ChatSidebarProps> = ({ 
+const ChatSidebar: React.FC<ChatSidebarProps & { onDeleteChat: (chatId: string) => void }> = ({ 
   chats, 
   currentChatId, 
   onSelectChat, 
   onCreateNewChat,
+  onDeleteChat,
   isCollapsed,
   toggleSidebar,
   headerContent
 }) => {
   const isMobile = useIsMobile();
+  const { toast } = useToast();
+
+  const handleDeleteChat = async (chatId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://127.0.0.1:8000/api/sessions/${chatId}/`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Token ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to delete chat');
+      
+      onDeleteChat(chatId);
+      toast({ title: 'Success', description: 'Chat deleted successfully' });
+    } catch (error) {
+      toast({ 
+        title: 'Error', 
+        description: 'Failed to delete chat', 
+        variant: 'destructive' 
+      });
+    }
+  };
 
   if (isCollapsed && isMobile) {
     return (
@@ -67,20 +93,34 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         {chats.length > 0 ? (
           <div className="space-y-1">
             {chats.map((chat) => (
-              <Button
+              <div 
                 key={chat.id}
-                variant="ghost"
                 className={cn(
-                  "w-full justify-start text-left text-sidebar-foreground hover:bg-sidebar-accent py-3 px-3",
+                  "group flex items-center justify-between rounded-md hover:bg-sidebar-accent",
                   currentChatId === chat.id && "bg-sidebar-accent"
                 )}
-                onClick={() => onSelectChat(chat.id)}
               >
-                <MessageSquare className="mr-2 h-4 w-4" />
-                <span className="truncate">
-                  {chat.title || `Chat ${new Date(chat.createdAt).toLocaleDateString()}`}
-                </span>
-              </Button>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start text-left text-sidebar-foreground hover:bg-transparent py-3 px-3",
+                  )}
+                  onClick={() => onSelectChat(chat.id)}
+                >
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  <span className="truncate">
+                    {chat.title || `Chat ${new Date(chat.createdAt).toLocaleDateString()}`}
+                  </span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-500 hover:bg-transparent"
+                  onClick={(e) => handleDeleteChat(chat.id, e)}
+                >
+                  <Trash2 size={16} />
+                </Button>
+              </div>
             ))}
           </div>
         ) : (
