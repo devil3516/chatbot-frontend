@@ -1,10 +1,9 @@
 import React from 'react';
 import { Chat, ChatSidebarProps } from '@/types/chat';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Plus, Menu, Trash2 } from 'lucide-react';
+import { MessageSquare, Plus, Menu, Trash2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useToast } from '@/hooks/use-toast';
 
 const ChatSidebar: React.FC<ChatSidebarProps & { onDeleteChat: (chatId: string) => void }> = ({ 
   chats, 
@@ -17,29 +16,15 @@ const ChatSidebar: React.FC<ChatSidebarProps & { onDeleteChat: (chatId: string) 
   headerContent
 }) => {
   const isMobile = useIsMobile();
-  const { toast } = useToast();
 
-  const handleDeleteChat = async (chatId: string, e: React.MouseEvent) => {
+  // Add confirmation dialog for delete
+  const handleDeleteWithConfirmation = (chatId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://127.0.0.1:8000/api/sessions/${chatId}/`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Token ${token}`,
-        },
-      });
-
-      if (!response.ok) throw new Error('Failed to delete chat');
-      
+    
+    const chatTitle = chats.find(chat => chat.id === chatId)?.title || 'this chat';
+    
+    if (window.confirm(`Are you sure you want to delete "${chatTitle}"? This action cannot be undone.`)) {
       onDeleteChat(chatId);
-      toast({ title: 'Success', description: 'Chat deleted successfully' });
-    } catch (error) {
-      toast({ 
-        title: 'Error', 
-        description: 'Failed to delete chat', 
-        variant: 'destructive' 
-      });
     }
   };
 
@@ -109,14 +94,15 @@ const ChatSidebar: React.FC<ChatSidebarProps & { onDeleteChat: (chatId: string) 
                 >
                   <MessageSquare className="mr-2 h-4 w-4" />
                   <span className="truncate">
-                    {chat.title || `Chat ${new Date(chat.createdAt).toLocaleDateString()}`}
+                    {chat.title || `Chat ${new Date(chat.createdAt).toLocaleString()}`}
                   </span>
                 </Button>
+                
                 <Button
                   variant="ghost"
                   size="icon"
                   className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-500 hover:bg-transparent"
-                  onClick={(e) => handleDeleteChat(chat.id, e)}
+                  onClick={(e) => handleDeleteWithConfirmation(chat.id, e)}
                 >
                   <Trash2 size={16} />
                 </Button>

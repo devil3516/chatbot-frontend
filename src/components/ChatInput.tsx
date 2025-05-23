@@ -1,15 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
 
 interface ChatInputProps {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (content: string) => void;
   isWaitingForResponse: boolean;
+  focusInput?: boolean;
 }
 
-const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isWaitingForResponse }) => {
+const ChatInput: React.FC<ChatInputProps> = ({ 
+  onSendMessage, 
+  isWaitingForResponse,
+  focusInput = false 
+}) => {
   const [input, setInput] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (focusInput && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [focusInput]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +42,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isWaitingForRespon
     <form onSubmit={handleSubmit} className="border-t border-chatBorder bg-white p-4">
       <div className="relative flex items-end max-w-3xl mx-auto">
         <Textarea
+          ref={textareaRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}

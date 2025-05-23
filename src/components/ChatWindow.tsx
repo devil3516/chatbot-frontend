@@ -9,13 +9,15 @@ interface ChatWindowProps {
   currentChat: Chat | null;
   onSendMessage: (content: string) => void;
   isWaitingForResponse: boolean;
+  focusInput?: boolean; // Add this line
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ 
   currentChat, 
   onSendMessage,
-  isWaitingForResponse
-}) => {
+  isWaitingForResponse,
+  focusInput = false // Add this with default value
+})=> {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -81,6 +83,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       <ChatInput 
         onSendMessage={onSendMessage}
         isWaitingForResponse={isWaitingForResponse}
+        focusInput={focusInput} // Pass the prop down
       />
     </div>
   );
