@@ -13,7 +13,7 @@ interface LoginFormProps {
 }
 
 const LoginForm = ({ onSuccess, onToggleForm }: LoginFormProps) => {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
@@ -21,7 +21,7 @@ const LoginForm = ({ onSuccess, onToggleForm }: LoginFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    if (!identifier || !password) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -32,7 +32,7 @@ const LoginForm = ({ onSuccess, onToggleForm }: LoginFormProps) => {
 
     setIsSubmitting(true);
     try {
-      await login(email, password);
+      await login(identifier, password);
       if (onSuccess) {
         onSuccess();
       }
@@ -48,19 +48,19 @@ const LoginForm = ({ onSuccess, onToggleForm }: LoginFormProps) => {
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold">Login</CardTitle>
         <CardDescription>
-          Enter your email and password to access your chats
+          Enter your email or username to access your chats
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="identifier">Email or Username</Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="identifier"
+              type="text"
+              placeholder="you@example.com or your username"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               disabled={isSubmitting}
               required
             />

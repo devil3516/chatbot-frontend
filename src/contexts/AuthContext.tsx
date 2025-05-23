@@ -11,7 +11,7 @@ type User = {
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<void>;
   signup: (email: string, username: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -61,19 +61,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (identifier: string, password: string) => {
     setIsLoading(true);
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Find user with matching credentials
+      // Find user with matching credentials (either email or username)
       const foundUser = mockUsers.find(
-        u => u.email === email && u.password === password
+        u => (u.email === identifier || u.username === identifier) && u.password === password
       );
       
       if (!foundUser) {
-        throw new Error('Invalid email or password');
+        throw new Error('Invalid credentials');
       }
       
       // Create the user object (without the password)
