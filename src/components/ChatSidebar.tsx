@@ -1,19 +1,10 @@
 
 import React from 'react';
-import { Chat } from '@/types/chat';
+import { Chat, ChatSidebarProps } from '@/types/chat';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Plus, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-
-interface ChatSidebarProps {
-  chats: Chat[];
-  currentChatId: string | null;
-  onSelectChat: (chatId: string) => void;
-  onCreateNewChat: () => void;
-  isCollapsed: boolean;
-  toggleSidebar: () => void;
-}
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({ 
   chats, 
@@ -21,7 +12,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onSelectChat, 
   onCreateNewChat,
   isCollapsed,
-  toggleSidebar
+  toggleSidebar,
+  headerContent
 }) => {
   const isMobile = useIsMobile();
 
@@ -60,6 +52,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
           </Button>
         )}
       </div>
+      
+      {headerContent}
       
       <Button 
         className="mx-3 mb-2 bg-newChat hover:bg-green-600 text-white flex gap-2"
