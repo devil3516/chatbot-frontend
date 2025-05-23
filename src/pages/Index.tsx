@@ -66,7 +66,13 @@ const Index = () => {
     if (!isAuthenticated) return;
 
     // Create a new chat immediately when user authenticates
-    createNewChat();
+    const newChatId = uuidv4();
+    const newChat: Chat = {
+      id: newChatId,
+      title: `New Chat`,
+      messages: [],
+      createdAt: Date.now(),
+    };
 
     const savedChats = localStorage.getItem('chats');
     if (savedChats) {
@@ -74,14 +80,13 @@ const Index = () => {
         const parsedChats = JSON.parse(savedChats);
         
         // If there are no saved chats, use the sample chats
-        const chatsToUse = parsedChats.length > 0 ? parsedChats : sampleChats;
+        let chatsToUse = parsedChats.length > 0 ? parsedChats : sampleChats;
         
-        setChats(chatsToUse);
+        // Add the new chat at the beginning of the list
+        setChats([newChat, ...chatsToUse]);
         
-        // Set currentChatId to the most recent chat
-        if (chatsToUse.length > 0) {
-          setCurrentChatId(chatsToUse[0].id);
-        }
+        // Set currentChatId to the new chat
+        setCurrentChatId(newChatId);
       } catch (error) {
         console.error('Error parsing saved chats:', error);
         toast({
@@ -90,13 +95,13 @@ const Index = () => {
           variant: "destructive"
         });
         // Use sample chats if there's an error
-        setChats(sampleChats);
-        setCurrentChatId(sampleChats[0].id);
+        setChats([newChat, ...sampleChats]);
+        setCurrentChatId(newChat.id);
       }
     } else {
-      // No saved chats, use the sample chats
-      setChats(sampleChats);
-      setCurrentChatId(sampleChats[0].id);
+      // No saved chats, use the sample chats with the new chat at the beginning
+      setChats([newChat, ...sampleChats]);
+      setCurrentChatId(newChat.id);
     }
 
     // Auto-collapse sidebar on mobile
